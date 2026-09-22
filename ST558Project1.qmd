@@ -84,13 +84,38 @@ my_api_key <- "c6758c38f49e633cc5c6631c8251876e5bc70c58"
 
 example_url <- "https://api.census.gov/data/2024/acs/acs1/pums?get=SEX,PWGTP,MAR&for=state:*&SCHL=24&key=c6758c38f49e633cc5c6631c8251876e5bc70c58"
 
-
+# make response object
 response <- GET(example_url)
-response
+#response
 
-str(response)
+#str(response)
 
-parsed_census <- fromJSON(response)
+raw_text <- content(response, as = "text")
+
+parsed_census <- fromJSON(raw_text)
+head(parsed_census)
+
+
+```
+#### Creating Helper Function
+
+```{r}
+library(dplyr)
+library(tibble)
+
+#Define function
+format_census_tibble <- function(api_response) {
+  raw_matrix <- fromJSON(content(api_response, as = "text"))
+  col_names <- raw_matrix[1, ]
+  data_rows <- raw_matrix[-1, ]
+  clean_tibble <- as_tibble(data_rows)
+  colnames(clean_tibble) <- col_names
+  return(clean_tibble)
+}
+
+#Test on response
+my_tibble <- format_census_tibble(response)
+my_tibble
 
 ```
 
