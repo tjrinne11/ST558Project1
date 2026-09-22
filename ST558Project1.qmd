@@ -4,9 +4,11 @@ format: html
 editor: visual
 ---
 
-### Part 1 Data Processing 
+### Part 1: Data Processing 
 
 #### Parsing Variable Values
+
+Before analyzing any trends, we must first acquire and structure the raw data from the Census API. In this section, I develop a pipeline to fetch data, query the PUMS API, and format the results into a clean, multi-year dataset with assigned variable classes.
 
 ```{r}
 # Load the required packages
@@ -245,5 +247,98 @@ get_census_data <- function(year = 2024,
 }
 
 #df
+```
+#### Combining Multiple Years
+
+```{r}
+#Function to pull years
+get_multiple_years <- function(years = c(2023, 2024), 
+                               num_vars = c("AGEP", "PWGTP"), 
+                               cat_vars = c("SEX"), 
+                               geo_level = "state", 
+                               geo_value = "37",
+                               api_key = my_api_key) {
+  
+  # Map over the requested years, call the single year function
+  combined_df <- purrr::map_dfr(years, function(y) {
+    single_year_data <- get_census_data(year = y, 
+                                  num_vars =num_vars, 
+                                  cat_vars = cat_vars,
+                                  geo_level = geo_level,
+                                  geo_value = geo_value,
+                                  api_key = api_key)
+    # Include a year variable
+    single_year_data$YEAR <- as.factor(y) 
+    return(single_year_data)
+  })
+  
+  class(combined_df) <- c("census", class(combined_df))
+  return(combined_df)
+}
+
+```
+
+### Part 2: Writing a Generic Function for Summarizing
+
+With the raw data cleanly formatted and assigned a custom census class, we can leverage R to handle our analysis efficiently. Below, I define custom summary() and plot() methods to calculate weighted statistics and generate weighted visualizations for our Census data.
+
+```{r}
+# Generic summary method for census objects
+summary.census <- function(object, numeric_vars = NULL, categorical_vars = NULL, ...) {
+  
+  # Default to all numeric variables except PWGTP
+  if (is.null(numeric_vars)) {
+    numeric_vars <- names(object)[sapply(object, is.numeric)]
+    numeric_vars <- setdiff(numeric_vars, "PWGTP")
+  }
+  
+  # Default to all categorical variables
+  if (is.null(categorical_vars)) {
+    categorical_vars <- names(object)[sapply(object, is.factor)]
+    if ("YEAR" %in% names(object)) {
+      categorical_vars <- unique(c(categorical_vars, "YEAR"))
+    }
+  }
+  
+  results <- list()
+  weights <- object$PWGTP
+  total_weight <- sum(weights, na.rm = TRUE)
+  
+  # Numeric Summaries: weighted means and standard deviations
+  for (var in numeric_vars) {
+    if (!var %in% c("JWAP", "JWDP")) { 
+      val <- object[[var]]
+      
+      weighted_mean <- sum(val * weights, na.rm = TRUE) / total_weight
+      variance_term <- sum((val^2) * weights, na.rm = TRUE) / total_weight - (weighted_mean^2)
+      weighted_sd <- sqrt(ifelse(variance_term > 0, variance_term, 0))
+      
+      results[[paste0(var, "_mean")]] <- weighted_mean
+      results[[paste0(var, "_sd")]] <- weighted_sd
+    }
+  }
+  
+  # Categorical Summaries: weighted counts[span_7](start_span)[span_7](end_span)
+  for (var in categorical_vars) {
+    val <- object[[var]]
+    counts <- tapply(weights, val, sum, na.rm = TRUE)
+    results[[paste0(var, "_counts")]] <- counts
+  }
+  
+  return(results)
+}
+
+# Generic plot method for census objects
+library(ggplot2)
+
+plot.census <- function(x, num_var, cat_var, ...) {
+  # Boxplot of numeric variable by categorical variable using PWGTP weight
+  p <- ggplot(x, aes(x = get(cat_var), y = get(num_var), weight = PWGTP)) + 
+    geom_boxplot(fill = "steelblue", alpha = 0.7) +
+    labs(x = cat_var, y = num_var, title = paste("Boxplot of", num_var, "by", cat_var)) +
+    theme_minimal()
+  
+  return(p)
+}
 ```
 
