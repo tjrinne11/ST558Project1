@@ -119,3 +119,131 @@ my_tibble
 
 ```
 
+
+#### Wrapping in a function that parses data
+
+
+```{r}
+library(lubridate)
+library(stringr)
+library(purrr)
+
+# Helper function to parse time strings and find midpoints
+parse_time_midpoint <- function(time_string) {
+  if (is.na(time_string) || time_string == "N/A" || str_detect(tolower(time_string), "not reported")) {
+    return(NA) # Assign missing time values an NA[span_0](start_span)[span_0](end_span)
+  }
+  
+  # Extract all times in the format "HH:MM a.m./p.m."
+  times <- str_extract_all(tolower(time_string), "\\d{1,2}:\\d{2}\\s*[ap]\\.m\\.")[[1]]
+  
+  if (length(times) == 2) {
+    # Convert to POSIXct for midpoint calculation
+    t1 <- parse_date_time(times[1], "%I:%M %p")
+    t2 <- parse_date_time(times[2], "%I:%M %p")
+    
+    # Calculate midpoint
+    midpoint <- t1 + as.duration(t1 %--% t2) / 2
+    return(format(midpoint, "%H:%M:%S")) # Return as standardized time string
+  }
+  return(NA)
+}
+
+# Main function to get and process census data
+get_census_data <- function(year = 2024, 
+                            num_vars = c("AGEP", "PWGTP"),
+                            cat_vars = c("SEX"), 
+                            geo_level = "state", 
+                            geo_value = "37",
+                            api_key = my_api_key) {
+  
+  # Year Validation
+  if (!(year %in% c(2021, 2022, 2023, 2024))) {
+    stop("Error: Year must be 2021, 2022, 2023, or 2024.")
+  }
+  
+  # Validate Numeric
+  valid_num_vars <- c("AGEP", "GASP", "GRPIP", "JWAP", "JWDP", "JWMNP", "PWGTP")
+  if (!("PWGTP" %in% num_vars)) {
+    stop("Error: PWGTP must be included in numeric variables.")
+  }
+  if (length(num_vars) < 2) {
+    stop("Error: You must select at least one numeric variable other than PWGTP.")
+  }
+  if (!all(num_vars %in% valid_num_vars)) {
+    stop("Error: Invalid numeric variable selected.")
+  }
+  
+  # Validate Categorical
+  valid_cat_vars <- c("FER", "HHL", "SCH", "SCHL", "SEX")
+  if (length(cat_vars) < 1) {
+    stop("Error: You must select at least one categorical variable.")
+  }
+  if (!all(cat_vars %in% valid_cat_vars)) {
+    stop("Error: Invalid categorical variable selected.")
+  }
+  
+  # Validate Geography
+  if (!(geo_level %in% c("region", "division", "state")) || length(geo_level) > 1) {
+    stop("Error: Geography level must be one of 'region', 'division', or 'state'.")
+  }
+  
+  # Handle 'all'
+  if (tolower(geo_value) == "all") {
+    geo_value <- "*"
+  }
+  
+  # Construct URL
+  all_vars <- c(num_vars, cat_vars)
+  var_string <- paste(all_vars, collapse = ",")
+  base_url <- paste0("https://api.census.gov/data/", year, "/acs/acs1/pums")
+  query_url <- paste0(base_url, "?get=", var_string, "&for=", geo_level, ":", geo_value, "&key=", api_key)
+  
+  # Request and format
+  response <- GET(query_url)
+  if (status_code(response) != 200) stop("Error: API request failed.")
+  
+  df <- format_census_tibble(response)
+  
+  #Load the dictionary
+  census_dicts <- readRDS("data/census.rds")
+  dict_year <- census_dicts[[as.character(year)]]
+  
+  # Process Categorical Variables
+  for (cat_var in cat_vars) {
+    if (cat_var %in% colnames(df)) {
+      # Pull the appropriate year's variable level
+      levels_info <- dict_year[[cat_var]]$values$item
+      
+      # Turn variables into factors
+      df[[cat_var]] <- factor(df[[cat_var]], 
+                              levels = names(levels_info), 
+                              labels = unlist(levels_info))
+    }
+  }
+  
+  # 3. Process Numeric and Time Variables
+  for (num_var in num_vars) {
+    if (num_var %in% c("JWAP", "JWDP")) {
+      # Match the API return codes to the dictionary string descriptions
+      time_codes <- dict_year[[num_var]]$values$item
+      mapped_strings <- time_codes[as.character(df[[num_var]])]
+      
+      # Turn variables into time values using the midpoint
+      df[[num_var]] <- sapply(mapped_strings, parse_time_midpoint)
+      df[[num_var]] <- hms::as_hms(df[[num_var]])
+    } else {
+      # Turn variables into numeric values
+      df[[num_var]] <- as.numeric(df[[num_var]])
+    }
+  }
+  
+  # Add census class
+  class(df) <- c("census", class(df))
+  
+  return(df)
+}
+
+#df
+```
+
