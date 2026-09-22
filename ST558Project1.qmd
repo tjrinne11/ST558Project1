@@ -4,7 +4,9 @@ format: html
 editor: visual
 ---
 
-### Section 1 Contacting API and Parsing.
+### Part 1 Data Processing 
+
+#### Parsing Variable Values
 
 ```{r}
 # Load the required packages
@@ -51,7 +53,44 @@ filter_census <- function(full_list, year) {
 }
 
 
+#save the data for all required years
+years <- c(2021, 2022, 2023, 2024)
 
+# Create an empty list
+census_dicts <- list()
+
+# Loop through each year
+for (y in years) {
+  raw_list <- get_json_dict(y)
+  
+  filtered_list <- filter_census(raw_list, y)
+  
+  #Store List
+  census_dicts[[as.character(y)]] <- filtered_list
+}
+
+# Save the final combined list as an .rds file 
+saveRDS(census_dicts, file = "data/census.rds")
+
+#readRDS("data/census.rds")
+
+```
+
+#### Parsing API Data
+
+
+```{r}
+my_api_key <- "c6758c38f49e633cc5c6631c8251876e5bc70c58"
+
+example_url <- "https://api.census.gov/data/2024/acs/acs1/pums?get=SEX,PWGTP,MAR&for=state:*&SCHL=24&key=c6758c38f49e633cc5c6631c8251876e5bc70c58"
+
+
+response <- GET(example_url)
+response
+
+str(response)
+
+parsed_census <- fromJSON(response)
 
 ```
 

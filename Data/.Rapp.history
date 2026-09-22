@@ -1,0 +1,5 @@
+load("/Users/tomasrinne/ST558Project1/Data/census.rds")
+readRDS("Data/census.rds")
+load("/Users/tomasrinne/ST558Project1/Data/census.rds")
+load("/Users/tomasrinne/ST558Project1/Data/census.rds")
+readRDS("data/census.rds")
