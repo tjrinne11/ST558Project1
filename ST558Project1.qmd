@@ -3,3 +3,55 @@ title: "Project 1"
 format: html
 editor: visual
 ---
+
+### Section 1 Contacting API and Parsing.
+
+```{r}
+# Load the required packages
+library(httr)
+library(jsonlite)
+
+#function to fetch the JSON for a single year
+get_json_dict <- function(year) {
+  # Construct the specific URL for the given year
+  url <- paste0("https://api.census.gov/data/", year, "/acs/acs1/pums/variables.json")
+  
+  #GET() to pull the data
+  response <- GET(url)
+  
+  # Extract and parse from JSON into an R list
+  parsed <- fromJSON(content(response, as = "text", encoding = "UTF-8"))
+  
+  # Return 'variables'
+  return(parsed$variables)
+
+}
+
+#filter the list
+filter_census <- function(full_list, year) {
+  #core variables
+  core_vars <- c("AGEP", "GASP", "GRPIP", "JWAP", "JWDP", 
+                 "JWMNP", "PWGTP", "FER", "HHL", "SCH", 
+                 "SCHL", "SEX", "REGION", "DIVISION")
+  
+  # The state variable
+  if (year %in% c(2021, 2022)) {
+    state_var <- "ST"
+  } else {
+    state_var <- "STATE"
+  }
+  
+  # Combine core variables
+  target_vars <- c(core_vars, state_var)
+  
+  #keep only the variables whose names match our target list
+  filtered_list <- full_list[names(full_list) %in% target_vars]
+  
+  return(filtered_list)
+}
+
+
+
+
+```
+
