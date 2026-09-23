@@ -538,8 +538,9 @@ Attaching package: 'purrr'</code></pre>
 <span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="investigating-how-monthly-gas-prices-gasp-a-hot-topic-right-now-and-gross-rent-as-a-percentage-of-income-grpip-impact-people-in-north-carolina.-adding-to-this-focusing-on-how-these-financial-situations-shift-according-to-if-someone-is-in-school-sch-and-what-level-of-education-they-have-completed-schl." class="level3">
-<h3 class="anchored" data-anchor-id="investigating-how-monthly-gas-prices-gasp-a-hot-topic-right-now-and-gross-rent-as-a-percentage-of-income-grpip-impact-people-in-north-carolina.-adding-to-this-focusing-on-how-these-financial-situations-shift-according-to-if-someone-is-in-school-sch-and-what-level-of-education-they-have-completed-schl.">Investigating how monthly gas prices (GASP), a hot topic right now, and gross rent as a percentage of income (GRPIP) impact people in North Carolina. Adding to this, focusing on how these financial situations shift according to if someone is in school (SCH) and what level of education they have completed (SCHL).</h3>
+<section id="investigation" class="level3">
+<h3 class="anchored" data-anchor-id="investigation">Investigation</h3>
+<p>Investigating how monthly gas prices (GASP), a hot topic right now, and gross rent as a percentage of income (GRPIP) impact people in North Carolina. Adding to this, focusing on how these financial situations shift according to if someone is in school (SCH) and what level of education they have completed (SCHL).</p>
 <p>To start, I will pull data for 2023 and 2024 for North Carolina.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co">#pulling data in for criteria</span></span>
@@ -665,9 +666,6 @@ Yes, private school or college or home school
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(data_nc, <span class="at">num_var =</span> <span class="st">"GASP"</span>, <span class="at">cat_var =</span> <span class="st">"SCHL"</span>) <span class="sc">+</span></span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">hjust =</span> <span class="dv">1</span>)) <span class="sc">+</span></span>
 <span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Distribution of NC Monthly Gas Costs by Education Level"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning in rq.fit.br(wx, wy, tau = tau, ...): Solution may be nonunique</code></pre>
-</div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
