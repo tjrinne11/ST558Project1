@@ -318,7 +318,7 @@ summary.census <- function(object, numeric_vars = NULL, categorical_vars = NULL,
     }
   }
   
-  # Categorical Summaries: weighted counts[span_7](start_span)[span_7](end_span)
+  # Categorical Summaries: weighted counts
   for (var in categorical_vars) {
     val <- object[[var]]
     counts <- tapply(weights, val, sum, na.rm = TRUE)
@@ -328,7 +328,7 @@ summary.census <- function(object, numeric_vars = NULL, categorical_vars = NULL,
   return(results)
 }
 
-# Generic plot method for census objects
+#  plot method for census objects
 library(ggplot2)
 
 plot.census <- function(x, num_var, cat_var, ...) {
@@ -341,4 +341,46 @@ plot.census <- function(x, num_var, cat_var, ...) {
   return(p)
 }
 ```
+
+
+### Investigating how monthly gas prices (GASP), a hot topic right now, and gross rent as a percentage of income (GRPIP) impact people in North Carolina. Adding to this, focusing on how these financial situations shift according to if someone is in school (SCH) and what level of education they have completed (SCHL).
+
+To start, I will pull data for 2023 and 2024 for North Carolina.
+
+```{r}
+
+#pulling data in for criteria
+data_nc <- get_multiple_years(years = c(2023,2024), num_vars = c("GASP", "GRPIP","PWGTP"), cat_vars = c("SCH", "SCHL"), geo_level = "state", geo_value = "37")
+
+
+#Basic full summary
+full_summary <- summary(data_nc)
+full_summary
+```
+Testing my summary function 
+```{r}
+my_summary <- summary(data_nc, numeric_vars = c("GRPIP"), categorical_vars = c("SCH"))
+
+head(my_summary$SCH)
+```
+Summary Statistics tell us basic stats and weights, plotting the distributions will give more understand to how these financial costs affect different groups. 
+
+```{r}
+# plotting Rent by School Enrollment
+plot(data_nc, num_var = "GRPIP", cat_var = "SCH") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Distribution of NC Rent Burden by School Enrollment")
+
+
+```
+Now to look at Gas Prices vs Education level
+
+```{r}
+# Gas Costs by Education level
+plot(data_nc, num_var = "GASP", cat_var = "SCHL") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Distribution of NC Monthly Gas Costs by Education Level")
+
+```
+
 
