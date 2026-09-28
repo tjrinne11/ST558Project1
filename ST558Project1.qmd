@@ -7,7 +7,7 @@ editor: visual
 ### Introduction
 
 Analyzing socioeconomic trends requires reliable, granular data. This project builds a custom R pipeline to query and process data from the Census Bureau's Public Use Microdata Sample (PUMS) API. Rather than downloading static datasets, we will develop functions that dynamically fetch, clean, and assign appropriate object classes to the data.
-Ultimately, I will use this pipeline to investigate the financial pressures facing residents of North Carolina—specifically looking at how monthly gas costs and rent burdens vary across different levels of educational attainment and school enrollment.
+Ultimately, I will use this pipeline to investigate the financial pressures facing residents of North Carolina, specifically looking at how monthly gas costs and rent burdens vary across different levels of educational attainment and school enrollment.
 
 ### Part 1: Data Processing
  
@@ -289,7 +289,7 @@ get_multiple_years <- function(years = c(2023, 2024),
 
 Our get_census_data function assigns a custom census class to the returned tibble. Because PUMS data uses the PWGTP variable to represent population weights (meaning one row represents multiple people), standard R summary functions will produce inaccurate statistical measures.
 
-To solve this, I am leveraging R's object-oriented system to build custom summary() and plot() methods. These generic functions will automatically detect our census objects and apply the correct weighted math to generate accurate means, standard deviations, and visualizations.
+To solve this, I am using R's object-oriented system to build custom summary() and plot() methods. These generic functions will automatically detect our census objects and apply the correct weighted math to generate accurate means, standard deviations, and visualizations.
 
 ```{r}
 # Generic summary method for census objects
@@ -401,4 +401,4 @@ plot(data_nc, num_var = "GASP", cat_var = "SCHL") +
 
 #### Analyzing Gas Costs by Education Level
 
-Next, we map Monthly Gas Costs (GASP) against educational attainment (SCHL). Because commuting distances and vehicle types often correlate with employment types—which in turn correlate with education—we might expect to see variations in fuel spending. The visualization highlights that advanced degrees tend to have slightly higher Gas Costs compared to the rest.
+Next, we map Monthly Gas Costs (GASP) against educational attainment (SCHL). Because commuting distances and vehicle types often correlate with employment types, which in turn correlate with education—we might expect to see variations in fuel spending. The visualization highlights that advanced degrees tend to have slightly higher Gas Costs compared to the rest.
