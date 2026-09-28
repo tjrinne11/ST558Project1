@@ -4,11 +4,16 @@ format: html
 editor: visual
 ---
 
-### Part 1: Data Processing 
+### Introduction
 
-#### Parsing Variable Values ###
+Analyzing socioeconomic trends requires reliable, granular data. This project builds a custom R pipeline to query and process data from the Census Bureau's Public Use Microdata Sample (PUMS) API. Rather than downloading static datasets, we will develop functions that dynamically fetch, clean, and assign appropriate object classes to the data.
+Ultimately, I will use this pipeline to investigate the financial pressures facing residents of North Carolina—specifically looking at how monthly gas costs and rent burdens vary across different levels of educational attainment and school enrollment.
 
-Before analyzing any trends, we must first acquire and structure the raw data from the Census API. In this section, I develop a pipeline to fetch data, query the PUMS API, and format the results into a clean, multi-year dataset with assigned variable classes.
+### Part 1: Data Processing
+ 
+#### Parsing Variable Values
+
+Before querying the main database, we need a reliable way to interpret the API's numeric codes. I will first extract the variable dictionaries from the Census JSON endpoints for 2021 through 2024, filtering for our core demographic and economic variables.
 
 ```{r}
 # Load the required packages
@@ -80,7 +85,6 @@ saveRDS(census_dicts, file = "data/census.rds")
 
 #### Parsing API Data
 
-
 ```{r}
 my_api_key <- "c6758c38f49e633cc5c6631c8251876e5bc70c58"
 
@@ -99,6 +103,7 @@ head(parsed_census)
 
 
 ```
+
 #### Creating Helper Function
 
 ```{r}
@@ -121,10 +126,9 @@ my_tibble
 
 ```
 
+#### Wrapping in a Function That Parses Data
 
-#### Wrapping in a function that parses data
-
-
+With our dictionary saved, we can now build the main engine of our analysis. The get_census_data function below handles the API request, validates user inputs (such as ensuring multiple numeric variables are selected), and processes the raw matrix into a clean tibble. Crucially, it maps categorical variables to their factor levels using our saved dictionary and calculates the midpoint for time-based commute variables.
 ```{r}
 library(lubridate)
 library(stringr)
@@ -248,6 +252,7 @@ get_census_data <- function(year = 2024,
 
 #df
 ```
+
 #### Combining Multiple Years
 
 ```{r}
@@ -280,7 +285,9 @@ get_multiple_years <- function(years = c(2023, 2024),
 
 ### Part 2: Writing a Generic Function for Summarizing
 
-With the raw data cleanly formatted and assigned a custom census class, we can leverage R to handle our analysis efficiently. Below, I define custom summary() and plot() methods to calculate weighted statistics and generate weighted visualizations for our Census data.
+Our get_census_data function assigns a custom census class to the returned tibble. Because PUMS data uses the PWGTP variable to represent population weights (meaning one row represents multiple people), standard R summary functions will produce inaccurate statistical measures.
+
+To solve this, I am leveraging R's object-oriented system to build custom summary() and plot() methods. These generic functions will automatically detect our census objects and apply the correct weighted math to generate accurate means, standard deviations, and visualizations.
 
 ```{r}
 # Generic summary method for census objects
@@ -341,6 +348,7 @@ plot.census <- function(x, num_var, cat_var, ...) {
   return(p)
 }
 ```
+
 ### Investigation
 
 Investigating how monthly gas prices (GASP), a hot topic right now, and gross rent as a percentage of income (GRPIP) impact people in North Carolina. Adding to this, focusing on how these financial situations shift according to if someone is in school (SCH) and what level of education they have completed (SCHL).
@@ -357,13 +365,16 @@ data_nc <- get_multiple_years(years = c(2023,2024), num_vars = c("GASP", "GRPIP"
 full_summary <- summary(data_nc)
 full_summary
 ```
-Testing my summary function 
+
+Testing my summary function
+
 ```{r}
 my_summary <- summary(data_nc, numeric_vars = c("GRPIP"), categorical_vars = c("SCH"))
 
 head(my_summary$SCH)
 ```
-Summary Statistics tell us basic stats and weights, plotting the distributions will give more understand to how these financial costs affect different groups. 
+
+Summary Statistics tell us basic stats and weights, plotting the distributions will give more understand to how these financial costs affect different groups.
 
 ```{r}
 # plotting Rent by School Enrollment
@@ -373,7 +384,10 @@ plot(data_nc, num_var = "GRPIP", cat_var = "SCH") +
 
 
 ```
-Now to look at Gas Prices vs Education level
+
+#### Analyzing Rent Burden by School Enrollment
+
+The distribution of Gross Rent as a Percentage of Income (GRPIP) reveals the housing pressure faced by different populations. Looking at the boxplot, we can see how the median rent burden and the spread of outliers compare between those currently enrolled in school and those who are not. We can see relatively similar spreads for all School Enrollment except Private school which is heavily skewed left with most having near 0 Rent Burden.
 
 ```{r}
 # Gas Costs by Education level
@@ -383,4 +397,6 @@ plot(data_nc, num_var = "GASP", cat_var = "SCHL") +
 
 ```
 
+#### Analyzing Gas Costs by Education Level
 
+Next, we map Monthly Gas Costs (GASP) against educational attainment (SCHL). Because commuting distances and vehicle types often correlate with employment types—which in turn correlate with education—we might expect to see variations in fuel spending. The visualization highlights that advanced degrees tend to have slightly higher Gas Costs compared to the rest.
