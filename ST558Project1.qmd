@@ -160,7 +160,7 @@ get_census_data <- function(year = 2024,
                             num_vars = c("AGEP", "PWGTP"),
                             cat_vars = c("SEX"), 
                             geo_level = "state", 
-                            geo_value = "37",
+                            geo_value = NULL,
                             api_key = my_api_key) {
   
   # Year Validation
@@ -193,7 +193,9 @@ get_census_data <- function(year = 2024,
   if (!(geo_level %in% c("region", "division", "state")) || length(geo_level) > 1) {
     stop("Error: Geography level must be one of 'region', 'division', or 'state'.")
   }
-  
+  if (is.null(geo_value)){
+    geo_value <- "37"
+  }
   # Handle 'all'
   if (tolower(geo_value) == "all") {
     geo_value <- "*"
